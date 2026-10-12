@@ -53,10 +53,42 @@ app.post("/pessoas", (req, res) => {
     const novaPessoa = {
         ...req.body,
         id: novoId
-        
+
     }
     pessoas.push(novaPessoa)
-    console.log(req.body)
-    res.send("Pessoa Recebida")
+    //console.log(pessoas)
+    //res.send("Pessoa Recebida") dados que chegam no servidor.
+
+    res.json(novaPessoa) //<-- resposta que volta para quem fez a requisição.
+
+})
+
+app.delete("/pessoas/:id", (req, res) => {
+
+    const id = Number(req.params.id)
+
+    const indice = pessoas.findIndex((pessoa) => pessoa.id === id)
+    if (indice === -1) {
+        return res.status(404).json({
+            mensagem: "Pessoa não encontrada"
+        })
+    }
+    pessoas.splice(indice, 1) //pegue a posição do indice e exclua
+
+    console.log(pessoas)
+})
+
+app.put("/pessoas/:id", (req, res) => {
+    const id = Number(req.params.id)
+    const indice = pessoas.findIndex((pessoa) => pessoa.id === id)
+    if (indice === -1) {
+        return res.status(404).json({
+            mensagem: "Pessoa não encontrada"
+        })
+    }
+    pessoas[indice] = {
+        id: pessoas[indice].id,
+        ...req.body
+    }
 })
 
