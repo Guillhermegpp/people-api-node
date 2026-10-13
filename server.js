@@ -58,8 +58,8 @@ app.post("/pessoas", (req, res) => {
     pessoas.push(novaPessoa)
     //console.log(pessoas)
     //res.send("Pessoa Recebida") dados que chegam no servidor.
-
-    res.json(novaPessoa) //<-- resposta que volta para quem fez a requisição.
+    res.status(201).json(novaPessoa)
+    //res.json(novaPessoa) //<-- resposta que volta para quem fez a requisição.
 
 })
 
@@ -74,8 +74,8 @@ app.delete("/pessoas/:id", (req, res) => {
         })
     }
     pessoas.splice(indice, 1) //pegue a posição do indice e exclua
-
-    console.log(pessoas)
+    res.status(204).send()
+    //console.log(pessoas)
 })
 
 app.put("/pessoas/:id", (req, res) => {
@@ -87,8 +87,10 @@ app.put("/pessoas/:id", (req, res) => {
         })
     }
     pessoas[indice] = {
-        id: pessoas[indice].id,
-        ...req.body
+        ...req.body,
+        id: pessoas[indice].id
     }
+
+    res.status(200).json(pessoas[indice])
 })
 
