@@ -10,6 +10,30 @@ app.get(...)
 app.post(...)
 app.listen(...)
  */
+require("dotenv").config()
+
+const { Pool } = require("pg")
+
+//o Pool administra várias conexões e reutiliza elas.
+const pool = new Pool({
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME
+})
+//  |||| "PostgreSQL, execute esse SQL para mim."
+//  vvvv só pra teste
+/*pool.query("SELECT * FROM pessoas", (erro, resultado) => {
+    //me dê todas as pessoas da tabela.
+    if (erro) {
+        console.error(erro)
+        return
+    }
+
+    console.log(resultado.rows)
+})
+*/ 
 
 app.use(express.json()) // habilita a leitura json
 
@@ -22,75 +46,66 @@ app → nossa aplicação Express
 app.listen(3000)
 
 
-const pessoas = [
-    {
-        id: 1,
-        nome: "Guilherme",
-        idade: 29,
-        profissao: "Programador"
-    },
-    {
-        id: 2,
-        nome: "João",
-        idade: 12,
-        profissao: "Estudante"
-    }
-]
 
 app.get("/", (req, res) => {
     res.send("Servidor fundionando")
 })
 
-app.get("/pessoas", (req, res) => {
-    res.json(pessoas) //Converte para JSON
-}
-)
 
-app.post("/pessoas", (req, res) => {
-    const novoId = pessoas[pessoas.length - 1].id + 1 // provisório até entrar de vez com o Banco de dados
+//"o async e o await - > Espera o PostgreSQL terminar essa consulta antes de continuar."
+app.get("/pessoas", async (req, res) => {
+    const resultado = await pool.query("SELECT * FROM pessoas")
 
-    //Usar spread (...)
-    const novaPessoa = {
-        ...req.body,
-        id: novoId
-
-    }
-    pessoas.push(novaPessoa)
-    //console.log(pessoas)
-    //res.send("Pessoa Recebida") dados que chegam no servidor.
-    res.status(201).json(novaPessoa)
-    //res.json(novaPessoa) //<-- resposta que volta para quem fez a requisição.
-
+    res.json(resultado.rows)
 })
 
-app.delete("/pessoas/:id", (req, res) => {
+app.post("/pessoas", async (req, res) => {
+    const { nome, idade, profissao } = req.body
+
+    const resultado = await pool.query(
+        "INSERT INTO pessoas (nome, idade, profissao) VALUES ($1, $2, $3) RETURNING *",
+        [nome, idade, profissao]
+    )
+
+    res.json(resultado.rows[0])
+})
+
+app.delete("/pessoas/:id", async (req, res) => {
 
     const id = Number(req.params.id)
 
-    const indice = pessoas.findIndex((pessoa) => pessoa.id === id)
-    if (indice === -1) {
+    const resultado = await pool.query(
+        "DELETE FROM pessoas WHERE id = $1 RETURNING *",
+        [id]
+    )
+
+    if (resultado.rowCount === 0) {
         return res.status(404).json({
             mensagem: "Pessoa não encontrada"
         })
     }
-    pessoas.splice(indice, 1) //pegue a posição do indice e exclua
+
     res.status(204).send()
-    //console.log(pessoas)
 })
 
-app.put("/pessoas/:id", (req, res) => {
+app.put("/pessoas/:id", async (req, res) => {
     const id = Number(req.params.id)
-    const indice = pessoas.findIndex((pessoa) => pessoa.id === id)
-    if (indice === -1) {
+    const { nome, idade, profissao } = req.body
+
+    const resultado = await pool.query(
+        `UPDATE pessoas
+         SET nome = $1, idade = $2, profissao = $3
+         WHERE id = $4
+         RETURNING *`,
+        [nome, idade, profissao, id]
+    )
+
+    if (resultado.rowCount === 0) {
         return res.status(404).json({
             mensagem: "Pessoa não encontrada"
         })
     }
-    pessoas[indice] = {
-        ...req.body,
-        id: pessoas[indice].id
-    }
 
-    res.status(200).json(pessoas[indice])
+    res.json(resultado.rows[0])
 })
 
