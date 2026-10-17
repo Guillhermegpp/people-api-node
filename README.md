@@ -37,40 +37,67 @@ Projeto de estudo criado para praticar desenvolvimento de APIs, operações CRUD
 
 ```powershell
 Invoke-RestMethod -Method Get -Uri "http://localhost:3000/pessoas"
+```
 
-POST - Cadastrar pessoa
+### POST - Cadastrar pessoa
+
+```powershell
 Invoke-RestMethod -Method Post -Uri "http://localhost:3000/pessoas" -ContentType "application/json" -Body '{"nome":"Maria","idade":"29","profissao":"Designer"}'
+```
 
-PUT - Atualizar pessoa
+### PUT - Atualizar pessoa
+
+```powershell
 Invoke-RestMethod -Method Put -Uri "http://localhost:3000/pessoas/3" -ContentType "application/json" -Body '{"nome":"Maria Silva","idade":"30","profissao":"Desenvolvedora"}'
+```
 
-DELETE - Excluir pessoa
+### DELETE - Excluir pessoa
+
+```powershell
 Invoke-RestMethod -Method Delete -Uri "http://localhost:3000/pessoas/3"
+```
 
-Como executar
+## Como executar
+
 Clone o repositório e instale as dependências:
-npm install
 
-Configure as variáveis de ambiente no arquivo .env:
+```bash
+npm install
+```
+
+Configure as variáveis de ambiente no arquivo `.env`:
+
+```env
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres
 DB_PASSWORD=sua_senha
 DB_NAME=people_manager
+```
 
 Inicie o servidor:
+
+```bash
 node server.js
+```
 
 A API estará disponível em:
+
+```text
 http://localhost:3000
+```
 
+## Banco de dados
 
-Banco de dados
 A aplicação utiliza PostgreSQL para persistência dos dados.
-Tabela utilizada:
+
+### Tabela utilizada
+
+```sql
 CREATE TABLE pessoas (
     id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
     idade INTEGER NOT NULL,
     profissao VARCHAR(100) NOT NULL
 );
+```
