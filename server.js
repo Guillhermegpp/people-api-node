@@ -60,17 +60,12 @@ app.get("/pessoas", async (req, res) => {
 })
 
 app.post("/pessoas", async (req, res) => {
-    const { nome, idade, profissao } = req.body
-    const idadeNumerica = Number(idade)
-    if (nome.trim() === "" ||
-        idadeNumerica <= 0 || 
-        idadeNumerica >= 130  ||
-        Number.isNaN(idadeNumerica) ||
-        profissao.trim() === "") {
-            return res.status(400).json({
-                mensagem: "Dados incorretos"
+    const dadosValidados = validaPessoa(req.body)
+    if (!dadosValidados)
+        return res.status(400).json({
+            mensagem: "Dados incorretos"
         })
-    }
+    const { nome, idadeNumerica, profissao } = dadosValidados
     const resultado = await pool.query(
         "INSERT INTO pessoas (nome, idade, profissao) VALUES ($1, $2, $3) RETURNING *",
         [nome, idadeNumerica, profissao]
@@ -99,14 +94,20 @@ app.delete("/pessoas/:id", async (req, res) => {
 
 app.put("/pessoas/:id", async (req, res) => {
     const id = Number(req.params.id)
-    const { nome, idade, profissao } = req.body
+
+    const dadosValidados = validaPessoa(req.body)
+    if (!dadosValidados)
+        return res.status(400).json({
+            mensagem: "Dados incorretos"
+        })
+    const { nome, idadeNumerica, profissao } = dadosValidados
 
     const resultado = await pool.query(
         `UPDATE pessoas
          SET nome = $1, idade = $2, profissao = $3
          WHERE id = $4
          RETURNING *`,
-        [nome, idade, profissao, id]
+        [nome, idadeNumerica, profissao, id]
     )
 
     if (resultado.rowCount === 0) {
@@ -116,5 +117,20 @@ app.put("/pessoas/:id", async (req, res) => {
     }
 
     res.json(resultado.rows[0])
+
+
 })
 
+function validaPessoa(pessoa) {
+    const { nome, idade, profissao } = pessoa
+    const idadeNumerica = Number(idade)
+
+    if (nome.trim() === "" ||
+        idadeNumerica <= 0 ||
+        idadeNumerica >= 130 ||
+        Number.isNaN(idadeNumerica) ||
+        profissao.trim() === "") {
+        return false
+    }
+    return { nome, idadeNumerica, profissao }
+}
