@@ -54,13 +54,11 @@ app.get("/", (req, res) => {
 
 //"o async e o await - > Espera o PostgreSQL terminar essa consulta antes de continuar."
 app.get("/pessoas", async (req, res, next) => {
-    try {
-        const resultado = await pool.query("SELECT * FROM pessoas")
 
-        res.json(resultado.rows)
-    } catch (e) {
-        next(e)
-    }
+    const resultado = await pool.query("SELECT * FROM pessoas")
+
+    res.json(resultado.rows)
+
 })
 
 app.post("/pessoas", async (req, res, next) => {
@@ -71,40 +69,33 @@ app.post("/pessoas", async (req, res, next) => {
             mensagem: "Dados incorretos"
         })
     const { nome, idadeNumerica, profissao } = dadosValidados
-    try {
-        const resultado = await pool.query(
-            "INSERT INTO pessoas (nome, idade, profissao) VALUES ($1, $2, $3) RETURNING *",
-            [nome, idadeNumerica, profissao]
-        )
 
-        res.json(resultado.rows[0])
-    } catch (e) {
+    const resultado = await pool.query(
+        "INSERT INTO pessoas (nome, idade, profissao) VALUES ($1, $2, $3) RETURNING *",
+        [nome, idadeNumerica, profissao]
+    )
 
-        next(e)
+    res.json(resultado.rows[0])
 
-    }
 })
 
 app.delete("/pessoas/:id", async (req, res, next) => {
 
     const id = Number(req.params.id)
-    try {
-        const resultado = await pool.query(
-            "DELETE FROM pessoas WHERE id = $1 RETURNING *",
-            [id]
-        )
 
-        if (resultado.rowCount === 0) {
-            return res.status(404).json({
-                mensagem: "Pessoa não encontrada"
-            })
-        }
+    const resultado = await pool.query(
+        "DELETE FROM pessoas WHERE id = $1 RETURNING *",
+        [id]
+    )
 
-        res.status(204).send()
-    } catch (e) {
-        next(e)
-
+    if (resultado.rowCount === 0) {
+        return res.status(404).json({
+            mensagem: "Pessoa não encontrada"
+        })
     }
+
+    res.status(204).send()
+
 
 })
 
@@ -118,26 +109,23 @@ app.put("/pessoas/:id", async (req, res, next) => {
             mensagem: "Dados incorretos"
         })
     const { nome, idadeNumerica, profissao } = dadosValidados
-    try {
-        const resultado = await pool.query(
-            `UPDATE pessoas
+
+    const resultado = await pool.query(
+        `UPDATE pessoas
          SET nome = $1, idade = $2, profissao = $3
          WHERE id = $4
          RETURNING *`,
-            [nome, idadeNumerica, profissao, id]
-        )
+        [nome, idadeNumerica, profissao, id]
+    )
 
-        if (resultado.rowCount === 0) {
-            return res.status(404).json({
-                mensagem: "Pessoa não encontrada"
-            })
-        }
-
-        res.json(resultado.rows[0])
-    } catch (e) {
-        next(e)
-
+    if (resultado.rowCount === 0) {
+        return res.status(404).json({
+            mensagem: "Pessoa não encontrada"
+        })
     }
+
+    res.json(resultado.rows[0])
+
 
 })
 
