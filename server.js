@@ -48,7 +48,7 @@ app.listen(3000)
 
 
 app.get("/", (req, res) => {
-    res.send("Servidor fundionando")
+    res.send("Servidor funcionando")
 })
 
 
@@ -64,22 +64,28 @@ app.get("/pessoas", async (req, res, next) => {
 app.post("/pessoas", async (req, res, next) => {
 
     const dadosValidados = validaPessoa(req.body)
-    if (!dadosValidados)
+    if (!dadosValidados.valido)
         return res.status(400).json({
-            mensagem: "Dados incorretos"
+            mensagem: "Dados inválidos",
+            /*object property shorthand
+                quando a propriedade e a variável têm o mesmo nome, você pode simplificar:
+                erros: erros
+            */
+            erros: dadosValidados.erros
         })
-    const { nome, idadeNumerica, profissao } = dadosValidados
+
+    const { nome, idade, profissao } = dadosValidados
 
     const resultado = await pool.query(
         "INSERT INTO pessoas (nome, idade, profissao) VALUES ($1, $2, $3) RETURNING *",
-        [nome, idadeNumerica, profissao]
+        [nome, idade, profissao]
     )
 
     res.json(resultado.rows[0])
 
 })
 
-app.delete("/pessoas/:id", async (req, res, next) => {
+app.delete("/pessoas/:id", async (req, res) => {
 
     const id = Number(req.params.id)
 
@@ -96,7 +102,6 @@ app.delete("/pessoas/:id", async (req, res, next) => {
 
     res.status(204).send()
 
-
 })
 
 app.put("/pessoas/:id", async (req, res, next) => {
@@ -104,18 +109,24 @@ app.put("/pessoas/:id", async (req, res, next) => {
     const id = Number(req.params.id)
 
     const dadosValidados = validaPessoa(req.body)
-    if (!dadosValidados)
+    if (!dadosValidados.valido)
         return res.status(400).json({
-            mensagem: "Dados incorretos"
+            mensagem: "Dados inválidos",
+            /*object property shorthand
+                quando a propriedade e a variável têm o mesmo nome, você pode simplificar:
+                erros: erros
+            */
+            erros: dadosValidados.erros
         })
-    const { nome, idadeNumerica, profissao } = dadosValidados
+
+    const { nome, idade, profissao } = dadosValidados
 
     const resultado = await pool.query(
         `UPDATE pessoas
          SET nome = $1, idade = $2, profissao = $3
          WHERE id = $4
          RETURNING *`,
-        [nome, idadeNumerica, profissao, id]
+        [nome, idade, profissao, id]
     )
 
     if (resultado.rowCount === 0) {
@@ -125,23 +136,40 @@ app.put("/pessoas/:id", async (req, res, next) => {
     }
 
     res.json(resultado.rows[0])
+}
 
-
-})
+)
 
 function validaPessoa(pessoa) {
     const { nome, idade, profissao } = pessoa
     const idadeNumerica = Number(idade)
-
-    if (nome.trim() === "" ||
-        idadeNumerica <= 0 ||
-        idadeNumerica >= 130 ||
-        Number.isNaN(idadeNumerica) ||
-        profissao.trim() === "") {
-        return false
+    const resultado = {
+        valido: true,
+        erros: {}
     }
-    return { nome, idadeNumerica, profissao }
+    if (typeof nome !== "string" || nome.trim() === "") {
+        resultado.erros.nome = "O nome é obrigatório"
+        resultado.valido = false
+    }
+    if (idadeNumerica <= 0 ||
+        idadeNumerica >= 130 ||
+        Number.isNaN(idadeNumerica)) {
+        resultado.erros.idade = "A idade deve estar entre 1 e 129"
+        resultado.valido = false
+    }
+    if (typeof profissao !== "string" || profissao.trim() === "") {
+        resultado.erros.profissao = "A profissão é obrigatória"
+        resultado.valido = false
+    }
+    if (resultado.valido === true) {
+        resultado.nome = nome
+        resultado.idade = idadeNumerica
+        resultado.profissao = profissao
+    }
+
+    return resultado
 }
+
 
 
 app.use((err, req, res, next) => {
