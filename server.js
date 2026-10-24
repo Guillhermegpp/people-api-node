@@ -23,17 +23,7 @@ const pool = new Pool({
     database: process.env.DB_NAME
 })
 //  |||| "PostgreSQL, execute esse SQL para mim."
-//  vvvv só pra teste
-/*pool.query("SELECT * FROM pessoas", (erro, resultado) => {
-    //me dê todas as pessoas da tabela.
-    if (erro) {
-        console.error(erro)
-        return
-    }
 
-    console.log(resultado.rows)
-})
-*/
 
 app.use(express.json()) // habilita a leitura json
 
@@ -53,7 +43,7 @@ app.get("/", (req, res) => {
 
 
 //"o async e o await - > Espera o PostgreSQL terminar essa consulta antes de continuar."
-app.get("/pessoas", async (req, res, next) => {
+app.get("/pessoas", async (req, res) => {
 
     const resultado = await pool.query("SELECT * FROM pessoas")
 
@@ -61,7 +51,7 @@ app.get("/pessoas", async (req, res, next) => {
 
 })
 
-app.post("/pessoas", async (req, res, next) => {
+app.post("/pessoas", async (req, res) => {
 
     const dadosValidados = validaPessoa(req.body)
     if (!dadosValidados.valido)
@@ -104,7 +94,7 @@ app.delete("/pessoas/:id", async (req, res) => {
 
 })
 
-app.put("/pessoas/:id", async (req, res, next) => {
+app.put("/pessoas/:id", async (req, res) => {
 
     const id = Number(req.params.id)
 
